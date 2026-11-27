@@ -62,9 +62,15 @@ flowchart TD
 
 ![S3 Bucket](./screenshots/01-s3-bucket.png)
 
-**Скриншот 1.2** — Вывод `terraform output` после применения инфраструктуры:
+![Service Account](./screenshots/02-service-account.png)
 
-![Terraform Output](./screenshots/02-terraform-output.png)
+**Скриншот 1.2** — VPC с подсетями в разных зонах доступности:
+
+![VPC](./screenshots/03-vpc.png)
+
+**Скриншот 1.3** — Вывод `terraform output` после применения инфраструктуры:
+
+![Terraform Output](./screenshots/04-terraform-output.png)
 
 ---
 
@@ -84,7 +90,7 @@ export KUBECONFIG="ansible/kubeconfig.yaml"
 kubectl get nodes -o wide
 ```
 
-![K8s Nodes](./screenshots/03-k8s-nodes.png)
+![K8s Nodes](./screenshots/05-k8s-nodes.png)
 
 **Скриншот 2.2** — Список всех системных подов (`Running`):
 
@@ -93,7 +99,7 @@ export KUBECONFIG="ansible/kubeconfig.yaml"
 kubectl get pods -A
 ```
 
-![K8s Pods](./screenshots/04-k8s-pods.png)
+![K8s Pods](./screenshots/07-k8s-pods.png)
 
 ---
 
@@ -105,7 +111,7 @@ kubectl get pods -A
 
 **Скриншот 3.1** — Страница репозитория в Docker Hub с тегами версий:
 
-![Docker Hub](./screenshots/05-dockerhub.png)
+![Docker Hub](./screenshots/08-dockerhub.png)
 
 ---
 
@@ -125,17 +131,17 @@ kubectl get pods -A
 
 `http://<ANY_WORKER_EXTERNAL_IP>/app`
 
-![App Web](./screenshots/06-app-web.png)
+![App Web](./screenshots/09-app-web.png)
 
 **Скриншот 4.2** — Окно авторизации Grafana:
 
 `http://<ANY_WORKER_EXTERNAL_IP>/grafana/`
 
-![Grafana Login](./screenshots/07-grafana-login.png)
+![Grafana Login](./screenshots/10-grafana-login.png)
 
 **Скриншот 4.3** — Дашборд состояния кластера в Grafana (`Kubernetes / Compute Resources / Cluster`):
 
-![Grafana Dashboard](./screenshots/08-grafana-dashboard.png)
+![Grafana Dashboard](./screenshots/11-grafana-dashboard.png)
 
 ---
 
@@ -156,11 +162,13 @@ kubectl get pods -A
 
 **Скриншот 5.1** — Выполнение CI/CD пайплайна в GitHub Actions:
 
-![GitHub Actions](./screenshots/09-github-actions.png)
+![GitHub Actions](./screenshots/12-github-actions.png)
 
 **Скриншот 5.2** — Pull Request с отчетом Terraform CI:
 
-![Terraform PR](./screenshots/10-terraform-pr.png)
+![Terraform PR](./screenshots/13-terraform-pr.png)
+
+![Terraform TEST](./screenshots/14-terraform-test.png)
 
 ---
 
