@@ -1,0 +1,57 @@
+---
+- name: Проверка, инициализирован ли уже кластер
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_init
+
+- name: Инициализация кластера с kubeadm
+  command: >
+    kubeadm init
+    --apiserver-advertise-address={{ internal_ip }}
+    --apiserver-cert-extra-sans={{ ansible_host }}
+    --pod-network-cidr={{ pod_network_cidr }}
+    --node-name={{ inventory_hostname }}
+  when: not kubeadm_init.stat.exists
+
+- name: Создание каталога .kube для пользователя ubuntu
+  file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Копирование admin.conf в .kube/config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    remote_src: yes
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+- name: Установка Flannel CNI
+  become_user: ubuntu
+  command: kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+  when: not kubeadm_init.stat.exists
+
+- name: Получение команды join для подключения воркеров
+  command: kubeadm token create --print-join-command
+  register: join_command_raw
+
+- name: Сохранение join_command
+  set_fact:
+    join_command: "{{ join_command_raw.stdout }}"
+
+- name: Чтение admin.conf для скачивания
+  slurp:
+    src: /etc/kubernetes/admin.conf
+  register: raw_kubeconfig
+
+- name: Сохранение локального kubeconfig с внешним IP
+  delegate_to: localhost
+  become: false
+  copy:
+    content: "{{ raw_kubeconfig.content | b64decode | regex_replace('server: https://.*:6443', 'server: https://' + ansible_host + ':6443') }}"
+    dest: "{{ playbook_dir }}/kubeconfig.yaml"
+    mode: '0600'

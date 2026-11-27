@@ -1,0 +1,16 @@
+[masters]
+master-01 ansible_host=1.2.3.4 internal_ip=10.10.1.8
+
+[workers]
+worker-01 ansible_host=1.2.3.5 internal_ip=10.10.1.20
+worker-02 ansible_host=1.2.3.6 internal_ip=10.10.3.33
+
+[k8s_cluster:children]
+masters
+workers
+
+[k8s_cluster:vars]
+ansible_user=ubuntu
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+k8s_version=1.28
+pod_network_cidr=10.244.0.0/16

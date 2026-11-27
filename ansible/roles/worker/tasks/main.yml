@@ -1,0 +1,9 @@
+---
+- name: Проверка, подключен ли уже воркер
+  stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: kubelet_conf
+
+- name: Присоединение воркера к кластеру
+  command: "{{ hostvars[groups['masters'][0]]['join_command'] }}"
+  when: not kubelet_conf.stat.exists

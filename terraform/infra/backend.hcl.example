@@ -1,0 +1,9 @@
+# Скопируйте этот файл в backend.hcl и заполните своими значениями:
+#   cp backend.hcl.example backend.hcl
+#
+# Затем инициализируйте backend:
+#   terraform init -reconfigure -backend-config=backend.hcl
+
+bucket     = "YOUR_BUCKET_NAME"
+access_key = "YOUR_ACCESS_KEY"
+secret_key = "YOUR_SECRET_KEY"

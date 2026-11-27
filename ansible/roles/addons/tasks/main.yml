@@ -1,0 +1,51 @@
+---
+- name: Установка Helm на master-узел
+  shell: |
+    if ! command -v helm &> /dev/null; then
+      curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    fi
+
+- name: Копирование манифестов из папки k8s на мастер
+  copy:
+    src: "{{ playbook_dir }}/../k8s/"
+    dest: /home/ubuntu/k8s/
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Добавление Helm репозиториев
+  become_user: ubuntu
+  shell: |
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo update
+
+- name: Развертывание NGINX Ingress Controller
+  become_user: ubuntu
+  shell: |
+    helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+      --namespace ingress-nginx --create-namespace \
+      --set controller.hostNetwork=true \
+      --set controller.kind=DaemonSet \
+      --set controller.service.type=ClusterIP \
+      --set controller.admissionWebhooks.enabled=false
+    kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission 2>/dev/null || true
+
+- name: Ожидание готовности подов Ingress Controller
+  become_user: ubuntu
+  shell: kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
+  retries: 5
+  delay: 5
+  register: ingress_ready
+  until: ingress_ready.rc == 0
+
+- name: Развертывание тестового приложения
+  become_user: ubuntu
+  shell: kubectl apply -f /home/ubuntu/k8s/app-deployment.yaml
+
+- name: Развертывание стека Prometheus + Grafana через Helm
+  become_user: ubuntu
+  shell: |
+    helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+      --namespace monitoring --create-namespace \
+      -f /home/ubuntu/k8s/monitoring-values.yaml

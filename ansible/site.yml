@@ -1,0 +1,28 @@
+---
+# 1. Базовая подготовка всех узлов (ядро, containerd, kubelet/kubeadm)
+- name: Подготовка всех узлов кластера Kubernetes
+  hosts: k8s_cluster
+  become: true
+  roles:
+    - common
+
+# 2. Инициализация Master-узла и сети CNI
+- name: Инициализация Master-узла
+  hosts: masters
+  become: true
+  roles:
+    - master
+
+# 3. Подключение Worker-узлов
+- name: Подключение Worker-узлов к кластеру
+  hosts: workers
+  become: true
+  roles:
+    - worker
+
+# 4. Развертывание Helm, Ingress, приложения и мониторинга
+- name: Развертывание сервисов и мониторинга
+  hosts: masters
+  become: true
+  roles:
+    - addons

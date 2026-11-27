@@ -1,0 +1,89 @@
+---
+- name: Отключение SWAP
+  shell: |
+    swapoff -a
+    sed -i '/swap/d' /etc/fstab
+
+- name: Загрузка необходимых модулей ядра
+  copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+
+- name: Активация модулей ядра
+  modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+
+- name: Настройка параметров sysctl для Kubernetes
+  copy:
+    dest: /etc/sysctl.d/k8s.conf
+    content: |
+      net.bridge.bridge-nf-call-iptables  = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.ipv4.ip_forward                 = 1
+
+- name: Применение sysctl
+  command: sysctl --system
+
+- name: Установка базовых пакетов
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: yes
+
+- name: Создание каталога для keyring
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Установка containerd
+  apt:
+    name: containerd
+    state: present
+    update_cache: yes
+
+- name: Генерация конфигурации containerd по умолчанию
+  shell: |
+    mkdir -p /etc/containerd
+    containerd config default > /etc/containerd/config.toml
+    sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+
+- name: Перезапуск и включение containerd
+  systemd:
+    name: containerd
+    state: restarted
+    enabled: yes
+
+- name: Добавление репозитория Kubernetes
+  shell: |
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg --yes
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' > /etc/apt/sources.list.d/kubernetes.list
+
+- name: Установка kubeadm, kubelet, kubectl
+  apt:
+    name:
+      - kubelet=1.28.*
+      - kubeadm=1.28.*
+      - kubectl=1.28.*
+    state: present
+    update_cache: yes
+
+- name: Фиксация версий Kubernetes пакетов
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
